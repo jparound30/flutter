@@ -74,7 +74,15 @@ Future<T> runInContext<T>(
     fallbacks: <Type, Generator>{
       AndroidLicenseValidator: () => AndroidLicenseValidator(),
       AndroidSdk: AndroidSdk.locateAndroidSdk,
-      AndroidStudio: AndroidStudio.latestValid,
+      AndroidStudio: () => AndroidStudio.latestValid(
+        config: globals.config,
+        fileSystem: globals.fs,
+        fileSystemUtils: globals.fsUtils,
+        platform: globals.platform,
+        plistParser: globals.plistParser,
+        processManager: globals.processManager,
+        processUtils: globals.processUtils
+      ),
       AndroidValidator: () => AndroidValidator(
         androidStudio: globals.androidStudio,
         androidSdk: globals.androidSdk,

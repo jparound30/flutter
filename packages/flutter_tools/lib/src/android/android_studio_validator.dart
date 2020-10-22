@@ -2,33 +2,56 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:flutter_tools/src/base/process.dart';
+import 'package:flutter_tools/src/ios/plist_parser.dart';
 import 'package:meta/meta.dart';
+import 'package:process/process.dart';
 
 import '../base/config.dart';
 import '../base/file_system.dart';
 import '../base/platform.dart';
-import '../base/user_messages.dart';
+import '../base/user_messages.dart' hide userMessages;
 import '../base/version.dart';
 import '../doctor.dart';
 import '../intellij/intellij.dart';
 import 'android_studio.dart';
 
 class AndroidStudioValidator extends DoctorValidator {
-  AndroidStudioValidator(this._studio, { @required FileSystem fileSystem })
-    : _fileSystem = fileSystem,
-      super('Android Studio');
+  AndroidStudioValidator(this._studio,
+      {@required FileSystem fileSystem, @required UserMessages userMessages})
+      : _fileSystem = fileSystem,
+        _userMessages = userMessages,
+        super('Android Studio');
 
   final AndroidStudio _studio;
   final FileSystem _fileSystem;
+  final UserMessages _userMessages;
 
-  static List<DoctorValidator> allValidators(Config config, Platform platform, FileSystem fileSystem, UserMessages userMessages) {
-    final List<AndroidStudio> studios = AndroidStudio.allInstalled();
+  static List<DoctorValidator> allValidators({
+    @required Config config,
+    @required FileSystem fileSystem,
+    @required FileSystemUtils fileSystemUtils,
+    @required Platform platform,
+    @required PlistParser plistParser,
+    @required ProcessManager processManager,
+    @required ProcessUtils processUtils,
+    @required UserMessages userMessages,
+  }) {
+    final List<AndroidStudio> studios = AndroidStudio.allInstalled(
+      config: config,
+      fileSystem: fileSystem,
+      fileSystemUtils: fileSystemUtils,
+      platform: platform,
+      plistParser: plistParser,
+      processManager: processManager,
+      processUtils: processUtils,
+    );
     return <DoctorValidator>[
       if (studios.isEmpty)
         NoAndroidStudioValidator(config: config, platform: platform, userMessages: userMessages)
       else
         ...studios.map<DoctorValidator>(
-          (AndroidStudio studio) => AndroidStudioValidator(studio, fileSystem: fileSystem)
+          (AndroidStudio studio) => AndroidStudioValidator(studio, fileSystem: fileSystem, userMessages: userMessages)
         ),
     ];
   }
@@ -40,9 +63,9 @@ class AndroidStudioValidator extends DoctorValidator {
 
     final String studioVersionText = _studio.version == Version.unknown
       ? null
-      : userMessages.androidStudioVersion(_studio.version.toString());
+      : _userMessages.androidStudioVersion(_studio.version.toString());
     messages.add(ValidationMessage(
-      userMessages.androidStudioLocation(_studio.directory),
+      _userMessages.androidStudioLocation(_studio.directory),
     ));
 
     final IntelliJPlugins plugins = IntelliJPlugins(_studio.pluginsPath, fileSystem: _fileSystem);
@@ -72,9 +95,9 @@ class AndroidStudioValidator extends DoctorValidator {
       messages.addAll(_studio.validationMessages.map<ValidationMessage>(
         (String m) => ValidationMessage.error(m),
       ));
-      messages.add(ValidationMessage(userMessages.androidStudioNeedsUpdate));
+      messages.add(ValidationMessage(_userMessages.androidStudioNeedsUpdate));
       if (_studio.configured != null) {
-        messages.add(ValidationMessage(userMessages.androidStudioResetDir));
+        messages.add(ValidationMessage(_userMessages.androidStudioResetDir));
       }
     }
 

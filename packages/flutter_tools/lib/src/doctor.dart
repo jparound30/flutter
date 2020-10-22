@@ -74,7 +74,16 @@ class _DefaultDoctorValidatorsProvider implements DoctorValidatorsProvider {
     }
 
     final List<DoctorValidator> ideValidators = <DoctorValidator>[
-      ...AndroidStudioValidator.allValidators(globals.config, globals.platform, globals.fs, globals.userMessages),
+      ...AndroidStudioValidator.allValidators(
+        config: globals.config,
+        fileSystem: globals.fs,
+        fileSystemUtils: globals.fsUtils,
+        platform: globals.platform,
+        plistParser: globals.plistParser,
+        processManager: globals.processManager,
+        processUtils: globals.processUtils,
+        userMessages: globals.userMessages,
+      ),
       ...IntelliJValidator.installedValidators(
         fileSystem: globals.fs,
         platform: globals.platform,
