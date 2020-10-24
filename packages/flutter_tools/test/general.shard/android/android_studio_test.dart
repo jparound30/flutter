@@ -62,8 +62,8 @@ void main() {
   });
 
   testWithoutContext('pluginsPath on Linux extracts custom paths from home dir', () {
-    const String installPath = '/opt/android-studio-with-cheese-5.0';
-    const String studioHome = '$homeLinux/.AndroidStudioWithCheese5.0';
+    const String installPath = '/opt/android-studio-with-cheese-4.0';
+    const String studioHome = '$homeLinux/.AndroidStudio4.0';
     const String homeFile = '$studioHome/system/.home';
     fileSystem.directory(installPath).createSync(recursive: true);
     fileSystem.file(homeFile).createSync(recursive: true);
@@ -79,7 +79,7 @@ void main() {
         processUtils: processUtils);
     expect(studio, isNotNull);
     expect(studio.pluginsPath,
-        equals('/home/me/.AndroidStudioWithCheese5.0/config/plugins'));
+        equals('/home/me/.AndroidStudio4.0/config/plugins'));
   });
 
   group('pluginsPath on Mac', () {

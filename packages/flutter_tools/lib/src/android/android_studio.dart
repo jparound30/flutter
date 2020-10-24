@@ -4,6 +4,7 @@
 
 import 'package:flutter_tools/src/base/config.dart';
 import 'package:flutter_tools/src/base/platform.dart';
+import 'package:flutter_tools/src/intellij/intellij_plugin.dart';
 import 'package:meta/meta.dart';
 import 'package:process/process.dart';
 
@@ -170,6 +171,12 @@ class AndroidStudio implements Comparable<AndroidStudio> {
   bool get isValid => _isValid;
 
   String get pluginsPath {
+    final IntelliJPluginsDir intelliJPluginsDir = IntelliJPluginsDir(
+        'AndroidStudio',
+        version.toString(),
+        fileSystem: _fileSystem,
+        fileSystemUtils: _fileSystemUtils,
+        platform: _platform);
     if (presetPluginsPath != null) {
       return presetPluginsPath;
     }
@@ -182,13 +189,15 @@ class AndroidStudio implements Comparable<AndroidStudio> {
         'Application Support',
         'AndroidStudio$major.$minor',
       );
-    } else {
+    } else if (_platform.isWindows){
       return _fileSystem.path.join(
         _fileSystemUtils.homeDirPath,
         '.$studioAppName$major.$minor',
         'config',
         'plugins',
       );
+    } else {
+      return intelliJPluginsDir.pluginsPath;
     }
   }
 
@@ -399,7 +408,35 @@ class AndroidStudio implements Comparable<AndroidStudio> {
         if (fileSystem.isDirectorySync(installPath)) {
           final AndroidStudio studio = AndroidStudio(
             installPath,
-            version: Version(4, 1, 0),
+            version: Version(4, 1, null),
+            studioAppName: 'Android Studio 4.1',
+            fileSystem: fileSystem,
+            fileSystemUtils: fileSystemUtils,
+            platform: platform,
+            processManager: processManager,
+            processUtils: processUtils,
+          );
+          if (studio != null && !_hasStudioAt(studio.directory, newerThan: studio.version)) {
+            studios.removeWhere((AndroidStudio other) => other.directory == studio.directory);
+            studios.add(studio);
+          }
+        }
+      }
+    } else if (platform.isLinux) {
+      // TODO(jparound30): idea 201以降ベースのASではここがデフォルトと思われるので4.1以上を対応する形に変更必要
+      final File homeDot = fileSystem.file(fileSystem.path.join(
+        fileSystemUtils.homeDirPath,
+        '.cache',
+        'Google',
+        'AndroidStudio4.1',
+        '.home',
+      ));
+      if (homeDot.existsSync()) {
+        final String installPath = homeDot.readAsStringSync();
+        if (fileSystem.isDirectorySync(installPath)) {
+          final AndroidStudio studio = AndroidStudio(
+            installPath,
+            version: Version(4, 1, null),
             studioAppName: 'Android Studio 4.1',
             fileSystem: fileSystem,
             fileSystemUtils: fileSystemUtils,

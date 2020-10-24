@@ -36,6 +36,13 @@ final Platform windowsPlatform = FakePlatform(
 );
 
 void main() {
+  void writeFileCreatingDirectories(
+      FileSystem fileSystem, String path, List<int> bytes) {
+    final File file = fileSystem.file(path);
+    file.parent.createSync(recursive: true);
+    file.writeAsBytesSync(bytes);
+  }
+
   testWithoutContext('Intellij validator can parse plugin manifest from plugin JAR', () async {
     final FileSystem fileSystem = MemoryFileSystem.test();
     // Create plugin JAR file for Flutter and Dart plugin.
@@ -74,11 +81,18 @@ void main() {
     final Iterable<DoctorValidator> installed = IntelliJValidatorOnLinux.installed(
       fileSystem: fileSystem,
       fileSystemUtils: FileSystemUtils(fileSystem: fileSystem, platform: linuxPlatform),
+      platform: linuxPlatform,
       userMessages: UserMessages(),
       );
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
+
   });
 
   testWithoutContext('intellij(2020.1) plugins check on linux (installed via JetBrains ToolBox app)', () async {
@@ -97,15 +111,22 @@ void main() {
     // Create plugin JAR file for Flutter and Dart plugin.
     createIntellijFlutterPluginJar(pluginPath + '/flutter-intellij/lib/flutter-intellij.jar', fileSystem, version: '50.0');
     createIntellijDartPluginJar(pluginPath + '/Dart/lib/Dart.jar', fileSystem);
+    writeFileCreatingDirectories(fileSystem, installPath + '.vmoptions', utf8.encode('-Didea.plugins.path=$pluginPath'));
 
     final Iterable<DoctorValidator> installed = IntelliJValidatorOnLinux.installed(
       fileSystem: fileSystem,
       fileSystemUtils: FileSystemUtils(fileSystem: fileSystem, platform: linuxPlatform),
+      platform: linuxPlatform,
       userMessages: UserMessages(),
     );
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
   });
 
   testWithoutContext('intellij(>=2020.2) plugins check on linux (installed via JetBrains ToolBox app)', () async {
@@ -128,11 +149,17 @@ void main() {
     final Iterable<DoctorValidator> installed = IntelliJValidatorOnLinux.installed(
       fileSystem: fileSystem,
       fileSystemUtils: FileSystemUtils(fileSystem: fileSystem, platform: linuxPlatform),
+      platform: linuxPlatform,
       userMessages: UserMessages(),
     );
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
   });
 
   testWithoutContext('intellij(2020.1~) plugins check on linux (installed via tar.gz)', () async {
@@ -155,11 +182,17 @@ void main() {
     final Iterable<DoctorValidator> installed = IntelliJValidatorOnLinux.installed(
       fileSystem: fileSystem,
       fileSystemUtils: FileSystemUtils(fileSystem: fileSystem, platform: linuxPlatform),
+      platform: linuxPlatform,
       userMessages: UserMessages(),
     );
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
   });
 
   testWithoutContext('legacy intellij(<2020) plugins check on windows', () async {
@@ -175,8 +208,8 @@ void main() {
         .writeAsStringSync(installPath, flush: true);
     final Directory installedDirectory = fileSystem.directory(installPath);
     installedDirectory.createSync(recursive: true);
-    createIntellijFlutterPluginJar(pluginPath + '/flutter-intellij/lib/flutter-intellij.jar', fileSystem, version: '50.0');
-    createIntellijDartPluginJar(pluginPath + '/Dart/lib/Dart.jar', fileSystem);
+    createIntellijFlutterPluginJar(pluginPath + '\\flutter-intellij\\lib\\flutter-intellij.jar', fileSystem, version: '50.0');
+    createIntellijDartPluginJar(pluginPath + '\\Dart\\lib\\Dart.jar', fileSystem);
 
     final Iterable<DoctorValidator> installed = IntelliJValidatorOnWindows.installed(
       fileSystem: fileSystem,
@@ -187,6 +220,11 @@ void main() {
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
   });
 
   testWithoutContext('intellij(2020.1 ~ 2020.2) plugins check on windows (installed via JetBrains ToolBox app)', () async {
@@ -214,6 +252,11 @@ void main() {
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
   });
 
   testWithoutContext('intellij(>=2020.3) plugins check on windows (installed via JetBrains ToolBox app and plugins)', () async {
@@ -241,6 +284,11 @@ void main() {
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
   });
 
   testWithoutContext('intellij(2020.1~) plugins check on windows (installed via installer)', () async {
@@ -268,6 +316,11 @@ void main() {
     expect(1, installed.length);
     final ValidationResult result = await installed.toList()[0].validate();
     expect(ValidationType.installed, result.type);
+    expect(result.messages, const <ValidationMessage>[
+      ValidationMessage('IntelliJ at $installPath'),
+      ValidationMessage('Flutter plugin version 50.0'),
+      ValidationMessage('Dart plugin version 162.2485'),
+    ]);
   });
 
   testWithoutContext('Intellij plugins path checking on mac', () async {

@@ -55,8 +55,8 @@ void main() {
     final ProcessUtils processUtils = MockProcessUtils();
     when(processUtils.runSync(any)).thenThrow(const ProcessException('java', <String>['--version']));
 
-    const String installPath = '/opt/android-studio-with-cheese-5.0';
-    const String studioHome = '$home/.AndroidStudioWithCheese5.0';
+    const String installPath = '/opt/android-studio-with-cheese-4.0';
+    const String studioHome = '$home/.AndroidStudio4.0';
     const String homeFile = '$studioHome/system/.home';
     fileSystem.directory(installPath).createSync(recursive: true);
     fileSystem.file(homeFile).createSync(recursive: true);

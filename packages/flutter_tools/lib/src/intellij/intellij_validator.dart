@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:flutter_tools/src/intellij/intellij_plugin.dart';
 import 'package:meta/meta.dart';
 
 import '../base/file_system.dart';
@@ -59,6 +60,7 @@ abstract class IntelliJValidator extends DoctorValidator {
       return IntelliJValidatorOnLinux.installed(
         fileSystem: fileSystem,
         fileSystemUtils: fileSystemUtils,
+        platform: platform,
         userMessages: userMessages,
       );
     }
@@ -251,6 +253,7 @@ class IntelliJValidatorOnLinux extends IntelliJValidator {
   static Iterable<DoctorValidator> installed({
     @required FileSystem fileSystem,
     @required FileSystemUtils fileSystemUtils,
+    @required Platform platform,
     @required UserMessages userMessages,
   }) {
     final List<DoctorValidator> validators = <DoctorValidator>[];
@@ -286,6 +289,13 @@ class IntelliJValidatorOnLinux extends IntelliJValidator {
       IntelliJValidator._idToTitle.forEach((String id, String title) {
         if (name.startsWith('.$id')) {
           final String version = name.substring(id.length + 1);
+
+          final IntelliJPluginsDir intelliJPluginsDir = IntelliJPluginsDir(
+              id, version,
+              fileSystem: fileSystem,
+              fileSystemUtils: fileSystemUtils,
+              platform: platform);
+
           String installPath;
           try {
             installPath = fileSystem.file(fileSystem.path.join(dir.path, 'system', '.home')).readAsStringSync();
@@ -293,7 +303,7 @@ class IntelliJValidatorOnLinux extends IntelliJValidator {
             // ignored
           }
           if (installPath != null && fileSystem.isDirectorySync(installPath)) {
-            final String pluginsPath = fileSystem.path.join(dir.path, 'config', 'plugins');
+            final String pluginsPath = intelliJPluginsDir.pluginsPath;
             addValidator(title, version, installPath, pluginsPath);
           }
         }
@@ -309,6 +319,13 @@ class IntelliJValidatorOnLinux extends IntelliJValidator {
       IntelliJValidator._idToTitle.forEach((String id, String title) {
         if (name.startsWith(id)) {
           final String version = name.substring(id.length);
+
+          final IntelliJPluginsDir intelliJPluginsDir = IntelliJPluginsDir(
+              id, version,
+              fileSystem: fileSystem,
+              fileSystemUtils: fileSystemUtils,
+              platform: platform);
+
           String installPath;
           try {
             installPath = fileSystem.file(fileSystem.path.join(dir.path, '.home')).readAsStringSync();
@@ -316,29 +333,8 @@ class IntelliJValidatorOnLinux extends IntelliJValidator {
             // ignored
           }
           if (installPath != null && fileSystem.isDirectorySync(installPath)) {
-            final String pluginsPathInUserHomeDir = fileSystem.path.join(
-                fileSystemUtils.homeDirPath,
-                '.local',
-                'share',
-                'JetBrains',
-                name);
-            if (installPath.contains(fileSystem.path.join('JetBrains','Toolbox','apps'))) {
-              // via JetBrains ToolBox app
-              final String pluginsPathInInstallDir = installPath + '.plugins';
-              if (fileSystem.isDirectorySync(pluginsPathInUserHomeDir)) {
-                // after 2020.2.x
-                final String pluginsPath = pluginsPathInUserHomeDir;
-                addValidator(title, version, installPath, pluginsPath);
-              } else if (fileSystem.isDirectorySync(pluginsPathInInstallDir)) {
-                // only 2020.1.X
-                final String pluginsPath = pluginsPathInInstallDir;
-                addValidator(title, version, installPath, pluginsPath);
-              }
-            } else {
-              // via tar.gz
-              final String pluginsPath = pluginsPathInUserHomeDir;
-              addValidator(title, version, installPath, pluginsPath);
-            }
+            final String pluginsPath = intelliJPluginsDir.pluginsPath;
+            addValidator(title, version, installPath, pluginsPath);
           }
         }
       });
